@@ -11,6 +11,10 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Pagination states (5 tasks per page)
+  const [currentPage, setCurrentPage] = useState(1);
+  const tasksPerPage = 5;
+
   // Shows an error in the banner (and logs it in the console)
   function showError(err) {
     console.error(err);
@@ -41,6 +45,7 @@ function App() {
       setError("");
       const newTodo = await createTodo(title);
       setTodos((prev) => [newTodo, ...prev]);
+      setCurrentPage(1); // Reset to first page when adding a task
     } catch (err) {
       showError(err);
     }
@@ -81,13 +86,26 @@ function App() {
       }
 
       setTodos((prev) => prev.filter((todo) => !todo.completed));
+      setCurrentPage(1);
     } catch (err) {
       showError(err);
     }
   }
 
+  // Handle filter changes and reset page to 1
+  function handleFilterChange(newFilter) {
+    setFilter(newFilter);
+    setCurrentPage(1);
+  }
+
   // Only the todos that match the selected filter
   const filteredTodos = todos.filter(FILTERS[filter].test);
+
+  // Pagination calculations
+  const indexOfLastTask = currentPage * tasksPerPage;
+  const indexOfFirstTask = indexOfLastTask - tasksPerPage;
+  const currentTodos = filteredTodos.slice(indexOfFirstTask, indexOfLastTask);
+  const totalPages = Math.ceil(filteredTodos.length / tasksPerPage);
 
   // "1 task" or "3 tasks"
   const taskWord = filteredTodos.length === 1 ? "task" : "tasks";
@@ -113,16 +131,41 @@ function App() {
     }
 
     return (
-      <ul className="todo-list">
-        {filteredTodos.map((todo) => (
-          <TodoItem
-            key={todo._id}
-            todo={todo}
-            onUpdate={handleUpdate}
-            onDelete={handleDelete}
-          />
-        ))}
-      </ul>
+      <>
+        <ul className="todo-list">
+          {currentTodos.map((todo) => (
+            <TodoItem
+              key={todo._id}
+              todo={todo}
+              onUpdate={handleUpdate}
+              onDelete={handleDelete}
+            />
+          ))}
+        </ul>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="pagination-controls" style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "12px", marginTop: "20px" }}>
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="pagination-btn"
+            >
+              Previous
+            </button>
+            <span>
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="pagination-btn"
+            >
+              Next
+            </button>
+          </div>
+        )}
+      </>
     );
   }
 
@@ -131,7 +174,7 @@ function App() {
       <Sidebar
         todos={todos}
         filter={filter}
-        onFilter={setFilter}
+        onFilter={handleFilterChange}
         onClearDone={handleClearDone}
       />
 

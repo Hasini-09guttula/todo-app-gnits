@@ -1,10 +1,14 @@
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
+const cors = require("cors");
 const path = require("path");
 const todoRoutes = require("./routes/todoRoutes");
 
 const app = express();
+
+// Enable CORS so the React frontend can talk to the backend
+app.use(cors());
 app.use(express.json());
 
 // Log every API request: method, url, status, time taken, and body for writes
@@ -15,7 +19,7 @@ app.use("/api", (req, res, next) => {
       ? ` ${JSON.stringify(req.body)}`
       : "";
     console.log(
-      `${req.method} ${req.originalUrl} ${res.statusCode} ${Date.now() - start}ms${body}`
+      `${req.method} ${req.originalUrl}${res.statusCode} ${Date.now() - start}ms${body}`
     );
   });
   next();
@@ -34,7 +38,9 @@ app.get("/{*splat}", (req, res) => {
 const PORT = process.env.PORT || 5001;
 
 mongoose
-  .connect(process.env.MONGO_URI)
+  .connect(process.env.MONGO_URI, {
+    serverSelectionTimeoutMS: 5000,
+  })
   .then(() => {
     console.log("Connected to MongoDB");
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

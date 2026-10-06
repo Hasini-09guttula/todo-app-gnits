@@ -10,8 +10,7 @@ const router = express.Router();
 
 router.get("/", getTodos);
 router.post("/", createTodo);
-// Complete the route for 3rd api controller
-
+router.put("/:id", updateTodo); // Added the missing route for updating a todo
 router.delete("/:id", deleteTodo);
 
 module.exports = router;
